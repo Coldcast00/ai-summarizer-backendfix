@@ -4,8 +4,11 @@ import openai
 import os
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
 
+# ✅ Allow CORS for extension access
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# ✅ Set OpenAI key from environment variable
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 @app.route("/api/summarize", methods=["POST"])
@@ -15,7 +18,9 @@ def summarize():
     print("🟡 Received prompt:", prompt)
 
     try:
-        response = openai.ChatCompletion.create(
+        # ✅ Updated to latest OpenAI SDK (v1+)
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a professional summarizer."},
@@ -24,7 +29,7 @@ def summarize():
             temperature=0.5,
             max_tokens=500
         )
-        result = response["choices"][0]["message"]["content"]
+        result = response.choices[0].message.content
         print("🟢 Generated summary:", result)
         return jsonify({"summary": result})
     except Exception as e:
